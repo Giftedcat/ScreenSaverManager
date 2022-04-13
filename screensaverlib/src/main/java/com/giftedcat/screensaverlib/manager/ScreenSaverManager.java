@@ -144,6 +144,9 @@ public class ScreenSaverManager {
      * */
     public void active(){
         freeTime = 0;
+        if (screenSaverDialog != null && screenSaverDialog.getDialog() != null && screenSaverDialog.getDialog().isShowing()){
+            screenSaverDialog.dismiss();
+        }
     }
 
     private Runnable mRunnable = new Runnable() {
