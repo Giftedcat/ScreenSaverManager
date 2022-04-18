@@ -1,11 +1,14 @@
 package com.giftedcat.screensaverlib.view;
 
+import android.app.Dialog;
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,7 +16,9 @@ import androidx.fragment.app.DialogFragment;
 
 import com.giftedcat.screensaverlib.R;
 
-public class ScreenSaverDialog extends DialogFragment {
+import java.util.Objects;
+
+public class ScreenSaverDialog extends Dialog {
 
     private int bubbleColor = Color.parseColor("#ffffff");
 
@@ -34,18 +39,23 @@ public class ScreenSaverDialog extends DialogFragment {
 
     private OnBubbleViewClickListener listener;
 
+    public ScreenSaverDialog(@NonNull Context context) {
+        super(context, R.style.dialog_fragment);
+
+        getWindow().setType(WindowManager.LayoutParams.TYPE_APPLICATION_PANEL);
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStyle(STYLE_NORMAL, R.style.dialog_fragment);
-    }
+        setContentView(R.layout.dialog_screen_saver);
 
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.dialog_screen_saver, container, false);
+        WindowManager.LayoutParams params = Objects.requireNonNull(getWindow()).getAttributes();
+        params.width = WindowManager.LayoutParams.MATCH_PARENT;
+        params.height = WindowManager.LayoutParams.MATCH_PARENT;
+        getWindow().setAttributes(params);
 
-        bvScreenSaver = view.findViewById(R.id.bv_screen_saver);
+        bvScreenSaver = findViewById(R.id.bv_screen_saver);
         bvScreenSaver.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -62,21 +72,6 @@ public class ScreenSaverDialog extends DialogFragment {
                 .setMinBubbleSpeedY(minBubbleSpeedY)
                 .setMaxBubbleSpeedY(maxBubbleSpeedY)
                 .setMaxBubbleCount(maxBubbleCount);
-        return view;
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        DisplayMetrics dm = new DisplayMetrics();
-        getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
-        getDialog().getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
     }
 
     /**

@@ -4,14 +4,22 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.AttributeSet;
+import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import com.giftedcat.screensaverlib.manager.ScreenSaverManager;
 import com.giftedcat.screensaverlib.util.TypedValueUtil;
 
 import java.util.Random;
@@ -27,29 +35,22 @@ import java.util.concurrent.TimeUnit;
  */
 public class BubbleView extends View {
 
-    private String TAG = "BubbleView";
     /**
      * 以一定的速率变小,甚至消失
      */
 
-    /*** 线程池 */
-    private Executor mExecutor;
     /*** 标记是否运行 */
     private boolean isStop = false;
 
-    /** 是否生成气泡*/
+    /**
+     * 是否生成气泡
+     */
     private boolean generateState;
 
     /*** 视图背景色 */
     private int backGroundColor = Color.parseColor("#32000000");
 
     private Paint mPaint = new Paint();
-
-    private int[] mColorArr = {
-            Color.parseColor("#ffffff"),
-            Color.parseColor("#ffffff"),
-            Color.parseColor("#ffffff")
-    };
 
     private Random rd = new Random();
 
@@ -70,7 +71,10 @@ public class BubbleView extends View {
     /*** 气泡最多有几个 */
     private int maxBubbleCount = 100;
 
-    private Handler mHandler = new Handler();
+    private boolean isShowing = false;
+
+    private WindowManager wm;
+    WindowManager.LayoutParams wmParams;
 
     public BubbleView(Context context) {
         this(context, null);
@@ -78,6 +82,11 @@ public class BubbleView extends View {
 
     public BubbleView(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        if (wmParams == null) {
+            wmParams = new WindowManager.LayoutParams();
+        }
         init(context);
     }
 
@@ -119,9 +128,7 @@ public class BubbleView extends View {
         mPaint.setDither(true);
         mPaint.setStyle(Paint.Style.FILL);
 
-        mExecutor = new ThreadPoolExecutor(3, 5, 15,
-                TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(8));
-        mExecutor.execute(mBubbleRunnable);
+        new Thread(mBubbleRunnable).start();
     }
 
     @Override
@@ -144,20 +151,34 @@ public class BubbleView extends View {
         @Override
         public void run() {
 
-            if (!isStop) {
+            while (!isStop){
 
-                if (mBubbleController != null) {
-                    //生成气泡
-                    mBubbleController.generateBubble();
-                    //遍历气泡
-                    mBubbleController.performTraversals();
+                if (generateState){
+                    if (mBubbleController != null) {
+                        //生成气泡
+                        mBubbleController.generateBubble();
+                        //遍历气泡
+                        mBubbleController.performTraversals();
+                    }
+
+                    postInvalidate();
                 }
 
-                postInvalidate();
-                mHandler.postDelayed(this, 16);
+                try {
+                    Thread.sleep(16);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
+
         }
     };
+
+    public BubbleView setBackground(int color){
+        backGroundColor = color;
+        setBackgroundColor(backGroundColor);
+        return this;
+    }
 
     /**
      * 改变颜色
@@ -176,23 +197,10 @@ public class BubbleView extends View {
         return this;
     }
 
-    /**
-     * 暂停生成气泡
-     * */
-    public void pauseGenerateBubble(){
-
-    }
-
-    /**
-     * 开始生成气泡
-     * */
-    public void startGenerateBubble(){
-
-    }
 
     /**
      * 设置气泡最小半径
-     * */
+     */
     public BubbleView setMinBubbleRadius(float minBubbleRadius) {
         this.minBubbleRadius = minBubbleRadius;
         return this;
@@ -200,7 +208,7 @@ public class BubbleView extends View {
 
     /**
      * 设置气泡最大半径
-     * */
+     */
     public BubbleView setMaxBubbleRadius(float maxBubbleRadius) {
         this.maxBubbleRadius = maxBubbleRadius;
         return this;
@@ -208,7 +216,7 @@ public class BubbleView extends View {
 
     /**
      * 设置气泡大小变化率
-     * */
+     */
     public BubbleView setRadiusRadio(float radiusRadio) {
         this.radiusRadio = radiusRadio;
         return this;
@@ -216,7 +224,7 @@ public class BubbleView extends View {
 
     /**
      * 设置气泡最小速度
-     * */
+     */
     public BubbleView setMinBubbleSpeedY(float minBubbleSpeedY) {
         this.minBubbleSpeedY = minBubbleSpeedY;
         return this;
@@ -224,7 +232,7 @@ public class BubbleView extends View {
 
     /**
      * 设置气泡最大速度
-     * */
+     */
     public BubbleView setMaxBubbleSpeedY(float maxBubbleSpeedY) {
         this.maxBubbleSpeedY = maxBubbleSpeedY;
         return this;
@@ -232,7 +240,7 @@ public class BubbleView extends View {
 
     /**
      * 设置气泡最大数量
-     * */
+     */
     public BubbleView setMaxBubbleCount(int maxBubbleCount) {
         this.maxBubbleCount = maxBubbleCount;
         return this;
@@ -241,12 +249,49 @@ public class BubbleView extends View {
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
-        isStop = false;
+        generateState = true;
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
+        generateState = false;
+    }
+
+    public void destroy(){
         isStop = true;
+    }
+
+    public void show() {
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            // 注意TYPE_SYSTEM_ALERT从Android8.0开始被舍弃了
+//            wmParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+//        } else {
+            // 从Android8.0开始悬浮窗要使用TYPE_APPLICATION_OVERLAY
+//            wmParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
+//        }
+        wmParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
+
+        wmParams.format = PixelFormat.RGBA_8888;
+        wmParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+
+        wmParams.alpha = 1.0f;
+        wmParams.gravity = Gravity.LEFT | Gravity.TOP;
+        wmParams.x = 0;
+        wmParams.y = 0;
+        wmParams.width = WindowManager.LayoutParams.MATCH_PARENT;
+        wmParams.height = WindowManager.LayoutParams.MATCH_PARENT;
+        // 显示自定义悬浮窗口
+        wm.addView(this, wmParams);
+        isShowing = true;
+    }
+
+    public void dismiss() {
+        wm.removeView(this);
+        isShowing = false;
+    }
+
+    public boolean isShowing() {
+        return isShowing;
     }
 }

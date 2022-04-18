@@ -5,6 +5,7 @@
     android:layout_height="match_parent">
 
     <TextView
+        android:id="@+id/tv_hello"
         android:layout_gravity="center"
         android:textSize="36sp"
         android:text="Hello World"

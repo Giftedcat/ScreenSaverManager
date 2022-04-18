@@ -33,7 +33,6 @@ public class ChargingHelper {
         b.setX(x);
         b.setY(y);
         b.setRadius(radius);
-        b.setOriginalSpeedY(speedY);
         b.setSpeedY(speedY);
         b.setAlpha(alpha);
         b.setColor(getComposeColor(alpha, color));

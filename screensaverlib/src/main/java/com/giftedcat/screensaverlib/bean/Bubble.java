@@ -41,11 +41,6 @@ public class Bubble {
      */
     private boolean unAccessible;
 
-    /**
-     * 初始速度
-     */
-    private float originalSpeedY;
-
     public int getColor() {
         return color;
     }
@@ -68,15 +63,6 @@ public class Bubble {
 
     public void setSpeedY(float speedY) {
         this.speedY = speedY;
-    }
-
-    public float getOriginalSpeedY() {
-        return originalSpeedY;
-    }
-
-    public Bubble setOriginalSpeedY(float originalSpeedY) {
-        this.originalSpeedY = originalSpeedY;
-        return this;
     }
 
     public float getX() {

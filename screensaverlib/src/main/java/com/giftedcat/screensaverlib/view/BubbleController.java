@@ -21,8 +21,6 @@ import java.util.Random;
  */
 public class BubbleController {
 
-    private String TAG = "BubbleController";
-
     private Random rd;
 
     /*** 气泡的最小半径 */
@@ -46,10 +44,6 @@ public class BubbleController {
 
     /*** 气泡集合 */
     public List<Bubble> mBubbleList = new ArrayList<>();
-    /*** 气泡关于路径的map */
-    private Map<Bubble, Path> mBubblePathMap = new HashMap<>();
-    //气泡与圆环黏和的点数组
-    private PointF[] bubblePoints = new PointF[7];
 
     public BubbleController(BubbleControllerBuilder builder) {
         if (builder.rd == null) throw new NullPointerException("builder.rd == null");
@@ -68,9 +62,6 @@ public class BubbleController {
         this.viewWidth = builder.viewWidth;
         this.viewHeight = builder.viewHeight;
         this.color = builder.color;
-        for (int i = 0; i < bubblePoints.length; i++) {
-            bubblePoints[i] = new PointF();
-        }
     }
 
     static class BubbleControllerBuilder {
@@ -92,9 +83,13 @@ public class BubbleController {
         /*** 气泡最多有几个 */
         private int maxBubbleCount;
 
-        /** view的宽度*/
+        /**
+         * view的宽度
+         */
         private int viewWidth;
-        /** view的高度*/
+        /**
+         * view的高度
+         */
         private int viewHeight;
 
         public BubbleControllerBuilder setColor(int color) {
@@ -167,9 +162,9 @@ public class BubbleController {
         //气泡的x起始坐标
         float x = rd.nextInt(viewWidth);
         //气泡的y起始坐标
-        float y = viewHeight + radius;
+        float y = viewHeight + minBubbleRadius;
         //气泡的起始速度
-        float speedY = minBubbleSpeedY + rd.nextFloat() * (maxBubbleSpeedY - minBubbleSpeedY);
+        float speedY = minBubbleSpeedY;
         float sizeRadio = radiusRadio * rd.nextFloat();
 
         ChargingHelper.generateBubble(mBubbleList, x, y, radius, speedY, bubbleAlpha, color, sizeRadio);
@@ -183,10 +178,7 @@ public class BubbleController {
         for (int i = 0; i < mBubbleList.size(); i++) {
             Bubble b = mBubbleList.get(i);
             if (b.getRadius() < minBubbleRadius || b.getY() <= 0) {
-                mBubbleList.remove(b);
-                if (mBubblePathMap.containsKey(b)) {
-                    mBubblePathMap.remove(b);
-                }
+                mBubbleList.remove(i);
                 i--;
                 continue;
             }
@@ -197,37 +189,8 @@ public class BubbleController {
                 //改变半径
                 b.setRadius(b.getRadius() - b.getSizeRadio());
             }
-            changeBubblePath(b);
         }
 
-    }
-
-
-    /**
-     * 改变气泡的路径
-     *
-     * @param b
-     */
-    private void changeBubblePath(Bubble b) {
-
-        Path path = mBubblePathMap.get(b);
-        if (path == null) {
-            path = new Path();
-            mBubblePathMap.put(b, path);
-        } else {
-            path.reset();
-        }
-
-        generatePath(b, path);
-    }
-
-    /**
-     * 生成路径
-     * */
-    private void generatePath(Bubble b, Path path) {
-        path.addCircle(b.getX(), b.getY(), b.getRadius(), Path.Direction.CCW);
-
-        b.setSpeedY(b.getOriginalSpeedY());
     }
 
     /**
@@ -237,7 +200,6 @@ public class BubbleController {
      */
     public void setColor(int color) {
         this.color = color;
-        mBubblePathMap.clear();
         mBubbleList.clear();
     }
 
@@ -250,10 +212,9 @@ public class BubbleController {
         for (int i = 0; i < mBubbleList.size(); i++) {
             Bubble b = mBubbleList.get(i);
             paint.setColor(b.getColor());
-            Path path = mBubblePathMap.get(b);
-            if (path != null) {
-                canvas.drawPath(path, paint);
-            }
+
+            canvas.drawCircle(b.getX(), b.getY(), b.getRadius(), paint);
+
         }
     }
 

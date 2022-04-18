@@ -1,11 +1,13 @@
 package com.giftedcat.screensaverlib.manager;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Handler;
 import android.view.View;
 
 import androidx.fragment.app.FragmentActivity;
 
+import com.giftedcat.screensaverlib.view.BubbleView;
 import com.giftedcat.screensaverlib.view.ScreenSaverDialog;
 
 import java.lang.ref.WeakReference;
@@ -16,12 +18,9 @@ import java.util.concurrent.TimeUnit;
 
 public class ScreenSaverManager {
 
-    private WeakReference<Activity> wrfActivity;
-
     public static ScreenSaverManager instance;
 
-    /*** 线程池 */
-    private Executor mExecutor;
+    private Context mContext;
 
     private Handler mHandler = new Handler();
 
@@ -32,7 +31,7 @@ public class ScreenSaverManager {
     /** 屏保出现时间*/
     private int countdown = 60;
 
-    ScreenSaverDialog screenSaverDialog;
+    private BubbleView bubbleView;
 
     public static ScreenSaverManager getInstance() {
         if (instance == null) {
@@ -46,23 +45,19 @@ public class ScreenSaverManager {
 
     }
 
-    public ScreenSaverManager init(Activity activity) {
-        wrfActivity = new WeakReference<>(activity);
+    public ScreenSaverManager init(Context context) {
         isStop = false;
+        mContext = context;
 
-
-        screenSaverDialog = new ScreenSaverDialog();
-        screenSaverDialog.setOnBubbleViewClickListener(new ScreenSaverDialog.OnBubbleViewClickListener() {
+        bubbleView = new BubbleView(mContext);
+        bubbleView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                freeTime = 0;
+                active();
             }
         });
 
-        mExecutor = new ThreadPoolExecutor(3, 5, 15,
-                TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(8));
-
-        mExecutor.execute(mRunnable);
+        new Thread(mRunnable).start();
         return instance;
     }
 
@@ -79,7 +74,23 @@ public class ScreenSaverManager {
      * 设置气泡颜色
      * */
     public ScreenSaverManager setBubbleColor(int color){
-        screenSaverDialog.changeBubbleColor(color);
+        bubbleView.changeColor(color);
+        return instance;
+    }
+
+    /**
+     * 设置气泡颜色
+     * */
+    public ScreenSaverManager setBackgroundColorResource(int resource){
+        bubbleView.setBackground(mContext.getResources().getColor(resource));
+        return instance;
+    }
+
+    /**
+     * 设置气泡颜色
+     * */
+    public ScreenSaverManager setBackgroundColor(int color){
+        bubbleView.setBackground(color);
         return instance;
     }
 
@@ -87,7 +98,7 @@ public class ScreenSaverManager {
      * 设置气泡颜色
      * */
     public ScreenSaverManager setBubbleColorResource(int resource){
-        screenSaverDialog.changeBubbleColor(wrfActivity.get().getResources().getColor(resource));
+        bubbleView.changeColor(mContext.getResources().getColor(resource));
         return instance;
     }
 
@@ -95,7 +106,7 @@ public class ScreenSaverManager {
      * 设置气泡最小半径
      * */
     public ScreenSaverManager setMinBubbleRadius(float minBubbleRadius) {
-        screenSaverDialog.setMinBubbleRadius(minBubbleRadius);
+        bubbleView.setMinBubbleRadius(minBubbleRadius);
         return instance;
     }
 
@@ -103,7 +114,7 @@ public class ScreenSaverManager {
      * 设置气泡最大半径
      * */
     public ScreenSaverManager setMaxBubbleRadius(float maxBubbleRadius) {
-        screenSaverDialog.setMaxBubbleRadius(maxBubbleRadius);
+        bubbleView.setMaxBubbleRadius(maxBubbleRadius);
         return instance;
     }
 
@@ -111,7 +122,7 @@ public class ScreenSaverManager {
      * 设置气泡大小变化率
      * */
     public ScreenSaverManager setRadiusRadio(float radiusRadio) {
-        screenSaverDialog.setRadiusRadio(radiusRadio);
+        bubbleView.setRadiusRadio(radiusRadio);
         return instance;
     }
 
@@ -119,7 +130,7 @@ public class ScreenSaverManager {
      * 设置气泡最小速度
      * */
     public ScreenSaverManager setMinBubbleSpeedY(float minBubbleSpeedY) {
-        screenSaverDialog.setMinBubbleSpeedY(minBubbleSpeedY);
+        bubbleView.setMinBubbleSpeedY(minBubbleSpeedY);
         return instance;
     }
 
@@ -127,7 +138,7 @@ public class ScreenSaverManager {
      * 设置气泡最大速度
      * */
     public ScreenSaverManager setMaxBubbleSpeedY(float maxBubbleSpeedY) {
-        screenSaverDialog.setMaxBubbleSpeedY(maxBubbleSpeedY);
+        bubbleView.setMaxBubbleSpeedY(maxBubbleSpeedY);
         return instance;
     }
 
@@ -135,7 +146,7 @@ public class ScreenSaverManager {
      * 设置气泡最大数量
      * */
     public ScreenSaverManager setMaxBubbleCount(int maxBubbleCount) {
-        screenSaverDialog.setMaxBubbleCount(maxBubbleCount);
+        bubbleView.setMaxBubbleCount(maxBubbleCount);
         return instance;
     }
 
@@ -144,8 +155,8 @@ public class ScreenSaverManager {
      * */
     public void active(){
         freeTime = 0;
-        if (screenSaverDialog != null && screenSaverDialog.getDialog() != null && screenSaverDialog.getDialog().isShowing()){
-            screenSaverDialog.dismiss();
+        if (bubbleView != null && bubbleView.isShowing()){
+            bubbleView.dismiss();
         }
     }
 
@@ -153,15 +164,10 @@ public class ScreenSaverManager {
         @Override
         public void run() {
 
-            if (wrfActivity.get() == null){
-                /** 页面已销毁*/
-                destroy();
-            }
-
             if (!isStop) {
 
                 if (freeTime == countdown) {
-                    screenSaverDialog.show(((FragmentActivity) wrfActivity.get()).getSupportFragmentManager(), "");
+                    bubbleView.show();
                 }
 
                 freeTime += 1;
@@ -173,6 +179,7 @@ public class ScreenSaverManager {
 
     public void destroy() {
         isStop = true;
+        bubbleView.destroy();
     }
 
 }
