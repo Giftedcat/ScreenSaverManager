@@ -13,7 +13,7 @@
 #### 2.1添加依赖
 首先我们需要在app/build.gradle文件中添加ScreenSaver的依赖，如下所示。
 ````
-implementation 'com.github.Giftedcat:ScreenSaverManager:1.1'
+implementation 'com.github.Giftedcat:ScreenSaverManager:1.2'
 ````
 #### 2.2初始化
 可以在首页进行初始化，并且可以根据需要对气泡的颜色、大小、速度、变化速率等参数进行调整
