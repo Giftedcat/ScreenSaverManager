@@ -20,6 +20,7 @@ implementation 'com.github.Giftedcat:ScreenSaverManager:1.1'
 ````
 ScreenSaverManager.getInstance()
         .init(this)
+        .setBackgroundColorResource(R.color.black)
         .setCountDownTime(10)
         .setBubbleColorResource(R.color.white)
         .setMinBubbleRadius(10)
@@ -27,7 +28,7 @@ ScreenSaverManager.getInstance()
         .setRadiusRadio(0.1f)
         .setMinBubbleSpeedY(4)
         .setMaxBubbleSpeedY(10)
-        .setMaxBubbleCount(100);
+        .setMaxBubbleCount(20);
 ````
 #### 2.3激活
 初始化之后，可以在基类（baseActivity）的触摸事件中，调用该工具的active函数，用于在用户触摸屏幕后重新进行空闲事件计时
@@ -42,6 +43,12 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
     }
     return super.dispatchTouchEvent(ev);
 }
+````
+#### 2.4销毁
+在不需要使用或者主页面销毁时，及时关闭
+
+````
+ScreenSaverManager.getInstance().destroy();
 ````
 
 欢迎star和follow
