@@ -73,6 +73,8 @@ public class BubbleView extends View {
 
     private boolean isShowing = false;
 
+    private Handler handler = new Handler();
+
     private WindowManager wm;
     WindowManager.LayoutParams wmParams;
 
@@ -145,36 +147,29 @@ public class BubbleView extends View {
         if (mBubbleController != null) {
             mBubbleController.drawBubble(canvas, mPaint);
         }
+        if (!isStop)
+            handler.postDelayed(mBubbleRunnable, 16);
     }
 
     private Runnable mBubbleRunnable = new Runnable() {
         @Override
         public void run() {
 
-            while (!isStop){
-
-                if (generateState){
-                    if (mBubbleController != null) {
-                        //生成气泡
-                        mBubbleController.generateBubble();
-                        //遍历气泡
-                        mBubbleController.performTraversals();
-                    }
-
-                    postInvalidate();
+            if (generateState) {
+                if (mBubbleController != null) {
+                    //生成气泡
+                    mBubbleController.generateBubble();
+                    //遍历气泡
+                    mBubbleController.performTraversals();
                 }
 
-                try {
-                    Thread.sleep(16);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                postInvalidate();
             }
 
         }
     };
 
-    public BubbleView setBackground(int color){
+    public BubbleView setBackground(int color) {
         backGroundColor = color;
         setBackgroundColor(backGroundColor);
         return this;
@@ -258,16 +253,16 @@ public class BubbleView extends View {
         generateState = false;
     }
 
-    public void destroy(){
+    public void destroy() {
         isStop = true;
     }
 
     public void show() {
 //        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            // 注意TYPE_SYSTEM_ALERT从Android8.0开始被舍弃了
+        // 注意TYPE_SYSTEM_ALERT从Android8.0开始被舍弃了
 //            wmParams.type = WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
 //        } else {
-            // 从Android8.0开始悬浮窗要使用TYPE_APPLICATION_OVERLAY
+        // 从Android8.0开始悬浮窗要使用TYPE_APPLICATION_OVERLAY
 //            wmParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 //        }
         wmParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
